@@ -1,25 +1,152 @@
 ---
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
+title: "PA1_template"
+author: "coursera"
+date: "12/5/2020"
+output: html_document
 ---
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
 
-## Loading and preprocessing the data
+#Reproducible Research: Peer Assigment 1
+
+##Loading data
+
+Frist we will unzip, load and view the data structure
+
+```{r}
+unzip("./activity.zip")
+data <- read.csv("./activity.csv")
+summary(data)
+```
+
+```{r}
+head(data)
+```
+
+## Histogram of Total Number of steps taken each day
+
+we will aggregate the steps(value) for each corresponding dates.
+
+```{r}
+steps_per_day <- aggregate(steps ~ date, data, sum, na.rm= TRUE)
+hist(steps_per_day$steps, col = "orange", xlab = "Steps", ylab = "Frequency", main = "Steps taken each date")
+```
+
+##Mean and Median of steps taken each date
+
+we will now compute the mean and median
+
+```{r}
+steps_mean <- mean(steps_per_day$steps)
+steps_median <- median(steps_per_day$steps)
+
+cat(" Mean is", steps_mean , 
+    "Median is ", steps_median)
+```
+
+
+## Time series plot
+
+Time series plot of the average number of steps taken
+
+```{r}
+avg_steps_date <- aggregate(steps ~ date, data, mean, na.rm=TRUE)
+
+plot(avg_steps_date$steps,  type = "l")
+
+```
+
+Maximum number of steps in 5 minutes interval
+
+```{r}
+steps_for_interval <- aggregate(steps ~ interval, data, mean, na.rm = TRUE)
+plot(steps ~ interval , steps_for_interval, type ="l")
+```
+
+```{r}
+Max_interval_with_steps <- steps_for_interval[which.max(steps_for_interval$steps),]
+cat("Max average was at" , Max_interval_with_steps$interval, "th Interval")
+```
+
+
+## Working aroun dthe missing values
+
+First lets compute the missing values in the dataset
+
+```{r}
+colSums(is.na(data))
+```
+
+There are 2304 miissing values in the steps column.
+We will replace these missing values with average steps by interval.
+
+```{r}
+m <- mean(steps_for_interval$steps)
+```
+
+Now lets replace the value
+```{r}
+data1 <- data
+missingIndex <- is.na(data[,1])
+
+data1[missingIndex,1] <- m
+head(data1)
+```
+steps taken each day atter computing the missing value
+
+```{r}
+steps_nona <- aggregate(steps ~ date, data1, sum )
+
+hist(steps_nona$steps, col = "blue", xlab = "Steps", ylab = "Days", main = "Number of steps taken after replacing missing values")
+```
+
+## Difference in Steps by Interval between weekday and weekend
+
+Conver the date column into date class and inmport dplyr library
+
+```{r}
+data1$date <- as.Date(data1$date)
+library(dplyr)
+```
+
+
+Now lets add a column to the dataset to determine whethere the date is weekday or weekend
+
+
+```{r}
+data2 <- data1 %>%
+  mutate(dateType = ifelse(weekdays(data1$date) == "Saturday" | weekdays(data1$date) == "Sunday", "Weekend", "Weekday"))
+head(data2)
+```
+
+Now lets sums the steps for Interval and dateType
+
+```{r}
+dataSum <- data2 %>%
+  group_by(dateType, interval)%>%
+  summarize(avg = sum(steps))
+
+head(dataSum)
+
+```
+
+Plot the graphs
+
+```{r}
+library(lattice)
+
+xyplot(avg ~ interval |dateType, dataSum, type ="l", layout = c(1,2))
+```
 
 
 
-## What is mean total number of steps taken per day?
 
 
 
-## What is the average daily activity pattern?
 
 
 
-## Imputing missing values
 
 
-
-## Are there differences in activity patterns between weekdays and weekends?
